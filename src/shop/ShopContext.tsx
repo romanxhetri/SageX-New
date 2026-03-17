@@ -16,6 +16,18 @@ interface ShopContextType {
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
+
+const readFromStorage = <T,>(key: string, fallback: T): T => {
+  const raw = localStorage.getItem(key);
+  if (!raw) return fallback;
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+};
+
 export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
@@ -23,13 +35,9 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Load from local storage
   useEffect(() => {
-    const savedCart = localStorage.getItem('sagex_cart');
-    const savedWishlist = localStorage.getItem('sagex_wishlist');
-    const savedUser = localStorage.getItem('sagex_user');
-
-    if (savedCart) setCart(JSON.parse(savedCart));
-    if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
-    if (savedUser) setUser(JSON.parse(savedUser));
+    setCart(readFromStorage<CartItem[]>('sagex_cart', []));
+    setWishlist(readFromStorage<string[]>('sagex_wishlist', []));
+    setUser(readFromStorage<UserProfile | null>('sagex_user', null));
   }, []);
 
   // Save to local storage
@@ -88,7 +96,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = (email: string) => {
     // Mock login
     setUser({
-      id: 'user_' + Math.random().toString(36).substr(2, 9),
+      id: 'user_' + Math.random().toString(36).slice(2, 11),
       name: email.split('@')[0],
       email,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,

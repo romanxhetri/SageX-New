@@ -1,6 +1,18 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 
+const isBlockedHostname = (hostname: string) => {
+  const normalized = hostname.toLowerCase();
+  if (["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(normalized)) return true;
+
+  // Basic private-network protections for proxy SSRF
+  return (
+    normalized.startsWith("10.") ||
+    normalized.startsWith("192.168.") ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(normalized)
+  );
+};
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -14,7 +26,13 @@ async function startServer() {
 
     try {
       const urlObj = new URL(targetUrl);
-      
+      if (!["http:", "https:"].includes(urlObj.protocol)) {
+        return res.status(400).send("Only HTTP(S) URLs are supported");
+      }
+      if (isBlockedHostname(urlObj.hostname)) {
+        return res.status(403).send("Target host is not allowed");
+      }
+
       // Forward client headers, especially cookies and content-type
       const headersToForward: Record<string, string> = {
         "User-Agent": req.headers["user-agent"] || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
