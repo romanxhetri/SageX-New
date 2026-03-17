@@ -256,7 +256,6 @@
             position: absolute; bottom: 90px; width: 140px; height: 140px;
             z-index: 200; /* Increased Z-Index for reliability */
             touch-action: none;
-            display: none;
         }
         .joystick-knob {
             width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2);
@@ -271,15 +270,6 @@
             background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
         }
         
-        /* Force display on touch devices or small screens */
-        @media (hover: none) and (pointer: coarse) {
-            .joystick-zone { display: block; }
-        }
-        @media (max-width: 900px) {
-             /* Also show on small screens just in case */
-            .joystick-zone { display: block; }
-        }
-
         @media (max-width: 380px) {
             /* Small phone adjustment */
             .joystick-zone { width: 100px; height: 100px; bottom: 80px; }

@@ -919,6 +919,29 @@ function Header({ cartCount, openCart, toggleChat, user, openAuth, openProfile, 
   );
 }
 
+interface Website {
+    name: string;
+    url: string;
+    icon: string;
+    color: string;
+    description: string;
+}
+
+const POPULAR_WEBSITES: Website[] = [
+    { name: "Google", url: "https://www.google.com", icon: "🔍", color: "#4285F4", description: "Search the world's information." },
+    { name: "YouTube", url: "https://www.youtube.com", icon: "📺", color: "#FF0000", description: "Watch and share videos." },
+    { name: "GitHub", url: "https://www.github.com", icon: "🐙", color: "#333", description: "Where the world builds software." },
+    { name: "Wikipedia", url: "https://www.wikipedia.org", icon: "📖", color: "#666", description: "The free encyclopedia." },
+    { name: "Reddit", url: "https://www.reddit.com", icon: "🤖", color: "#FF4500", description: "The front page of the internet." },
+    { name: "Amazon", url: "https://www.amazon.com", icon: "📦", color: "#FF9900", description: "Shop for everything." },
+    { name: "Twitter", url: "https://www.twitter.com", icon: "🐦", color: "#1DA1F2", description: "What's happening in the world." },
+    { name: "LinkedIn", url: "https://www.linkedin.com", icon: "💼", color: "#0077B5", description: "Professional networking." },
+    { name: "Stack Overflow", url: "https://stackoverflow.com", icon: "💻", color: "#F48024", description: "For developers, by developers." },
+    { name: "Medium", url: "https://medium.com", icon: "✍️", color: "#000", description: "Read and write stories." },
+    { name: "Netflix", url: "https://www.netflix.com", icon: "🎬", color: "#E50914", description: "Watch TV shows and movies." },
+    { name: "Spotify", url: "https://www.spotify.com", icon: "🎵", color: "#1DB954", description: "Music for everyone." },
+];
+
 interface TabData {
     id: string;
     url: string;
@@ -927,17 +950,87 @@ interface TabData {
     historyIndex: number;
     title: string;
     isLoading: boolean;
+    isHome?: boolean;
 }
 
-function WebBrowser({ initialUrl = "https://en.wikipedia.org/wiki/Special:Random", onClose }: any) {
+function BrowserHome({ onNavigate }: { onNavigate: (url: string) => void }) {
+    return (
+        <div style={{ flex: 1, background: '#1c1d1f', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 20px', overflowY: 'auto' }}>
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ textAlign: 'center', marginBottom: '60px' }}
+            >
+                <h1 style={{ fontSize: '3.5rem', margin: 0, background: 'linear-gradient(45deg, #00f2ff, #fbc2eb)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 800, letterSpacing: '-2px' }}>
+                    SageX Browser
+                </h1>
+                <p style={{ color: '#9aa0a6', fontSize: '1.1rem', marginTop: '10px' }}>Explore the universe of information</p>
+            </motion.div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '24px', width: '100%', maxWidth: '1200px' }}>
+                {POPULAR_WEBSITES.map((site, i) => (
+                    <motion.div
+                        key={site.url}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        whileHover={{ y: -8, scale: 1.02 }}
+                        onClick={() => onNavigate(site.url)}
+                        className="glass-panel"
+                        style={{ 
+                            padding: '24px', 
+                            borderRadius: '20px', 
+                            cursor: 'pointer', 
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                            background: 'rgba(255,255,255,0.02)',
+                            backdropFilter: 'blur(10px)'
+                        }}
+                    >
+                        <div style={{ 
+                            width: '64px', 
+                            height: '64px', 
+                            borderRadius: '16px', 
+                            background: `${site.color}22`, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            fontSize: '2rem',
+                            marginBottom: '16px',
+                            border: `1px solid ${site.color}44`
+                        }}>
+                            {site.icon}
+                        </div>
+                        <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '1.1rem' }}>{site.name}</h3>
+                        <p style={{ margin: 0, color: '#9aa0a6', fontSize: '0.8rem', lineHeight: '1.4' }}>{site.description}</p>
+                    </motion.div>
+                ))}
+            </div>
+
+            <div style={{ marginTop: '80px', color: '#5f6368', fontSize: '0.9rem', display: 'flex', gap: '24px' }}>
+                <span>Privacy First</span>
+                <span>•</span>
+                <span>Ad-Free Experience</span>
+                <span>•</span>
+                <span>AI Powered</span>
+            </div>
+        </div>
+    );
+}
+
+function WebBrowser({ initialUrl = "", onClose }: any) {
     const [tabs, setTabs] = useState<TabData[]>([{
         id: Date.now().toString(),
         url: initialUrl,
         inputUrl: initialUrl,
         history: [initialUrl],
         historyIndex: 0,
-        title: 'New Tab',
-        isLoading: true
+        title: initialUrl ? 'New Tab' : 'Home',
+        isLoading: initialUrl ? true : false,
+        isHome: initialUrl ? false : true
     }]);
     const [activeTabId, setActiveTabId] = useState(tabs[0].id);
     const [bookmarks, setBookmarks] = useState([
@@ -981,10 +1074,17 @@ function WebBrowser({ initialUrl = "https://en.wikipedia.org/wiki/Special:Random
     };
 
     const navigateTo = (newUrl: string, tabId = activeTabId) => {
-        let finalUrl = newUrl;
-        if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
-            finalUrl = 'https://' + newUrl;
+        let finalUrl = newUrl.trim();
+        if (!finalUrl) return;
+
+        if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+            if (finalUrl.includes('.') && !finalUrl.includes(' ')) {
+                finalUrl = 'https://' + finalUrl;
+            } else {
+                finalUrl = `https://www.google.com/search?q=${encodeURIComponent(finalUrl)}`;
+            }
         }
+        
         const tab = tabs.find(t => t.id === tabId)!;
         const newHistory = tab.history.slice(0, tab.historyIndex + 1);
         newHistory.push(finalUrl);
@@ -998,7 +1098,8 @@ function WebBrowser({ initialUrl = "https://en.wikipedia.org/wiki/Special:Random
             history: newHistory,
             historyIndex: newHistory.length - 1,
             isLoading: true,
-            title: domain
+            title: domain,
+            isHome: false
         });
     };
 
@@ -1032,12 +1133,13 @@ function WebBrowser({ initialUrl = "https://en.wikipedia.org/wiki/Special:Random
     const addNewTab = () => {
         const newTab: TabData = {
             id: Date.now().toString(),
-            url: 'https://google.com',
-            inputUrl: 'https://google.com',
-            history: ['https://google.com'],
+            url: '',
+            inputUrl: '',
+            history: [''],
             historyIndex: 0,
-            title: 'google.com',
-            isLoading: true
+            title: 'Home',
+            isLoading: false,
+            isHome: true
         };
         setTabs([...tabs, newTab]);
         setActiveTabId(newTab.id);
@@ -1226,14 +1328,22 @@ function WebBrowser({ initialUrl = "https://en.wikipedia.org/wiki/Special:Random
                     )}
 
                     {tabs.map(tab => (
-                        <iframe 
-                            key={tab.id}
-                            src={`/api/proxy?url=${encodeURIComponent(tab.url)}${activeExtensions.includes('adblock') ? '&adblock=true' : ''}${activeExtensions.includes('darkmode') ? '&dark=true' : ''}`}
-                            onLoad={() => updateTab(tab.id, { isLoading: false })}
-                            style={{ width: '100%', height: '100%', border: 'none', display: activeTabId === tab.id ? 'block' : 'none' }} 
-                            title={`Browser Content ${tab.id}`}
-                            sandbox="allow-same-origin allow-scripts allow-forms"
-                        />
+                        <React.Fragment key={tab.id}>
+                            {tab.isHome ? (
+                                <div style={{ display: activeTabId === tab.id ? 'flex' : 'none', width: '100%', height: '100%' }}>
+                                    <BrowserHome onNavigate={navigateTo} />
+                                </div>
+                            ) : (
+                                <iframe 
+                                    key={tab.id}
+                                    src={`/api/proxy?url=${encodeURIComponent(tab.url)}${activeExtensions.includes('adblock') ? '&adblock=true' : ''}${activeExtensions.includes('darkmode') ? '&dark=true' : ''}`}
+                                    onLoad={() => updateTab(tab.id, { isLoading: false })}
+                                    style={{ width: '100%', height: '100%', border: 'none', display: activeTabId === tab.id ? 'block' : 'none' }} 
+                                    title={`Browser Content ${tab.id}`}
+                                    sandbox="allow-same-origin allow-scripts allow-forms"
+                                />
+                            )}
+                        </React.Fragment>
                     ))}
                 </div>
 
@@ -4059,9 +4169,14 @@ function SolarSystemScene({ onHubSelect, isPaused, mode, onError, quality }: { o
   const moveState = useRef({ 
       forward: false, backward: false, left: false, right: false, up: false, down: false, 
       rotX: 0, rotY: 0,
-      joyVector: new THREE.Vector2(0, 0)
+      joyVector: new THREE.Vector2(0, 0),
+      fireRequested: false,
+      isAIControlled: true
   });
   const [isLocked, setIsLocked] = useState(false);
+  const [currentTarget, setCurrentTarget] = useState<string | null>(null);
+  const [targetHealth, setTargetHealth] = useState(1);
+  const targetRef = useRef<any>(null);
   const [showJoysticks, setShowJoysticks] = useState(false);
 
   useEffect(() => { simState.current = { isPaused, mode }; }, [isPaused, mode]);
@@ -4802,25 +4917,25 @@ function SolarSystemScene({ onHubSelect, isPaused, mode, onError, quality }: { o
         };
 
         const ufo1 = createUFO(0x00ffcc);
-        ufo1.position.set(40, 10, 0);
+        ufo1.position.set(0, 100, 0);
         scene.add(ufo1);
         shipsRef.current.push({ mesh: ufo1, type: 'ufo', id: 'ufo1' });
 
         const ufo2 = isUltraLow ? null : createUFO(0xff00cc);
         if (ufo2) {
-            ufo2.position.set(40, -10, 20);
+            ufo2.position.set(20, 100, 20);
             scene.add(ufo2);
             shipsRef.current.push({ mesh: ufo2, type: 'ufo', id: 'ufo2' });
         }
 
         const ship1 = createShip(0xff4400);
-        ship1.position.set(-40, -10, 0);
+        ship1.position.set(0, -100, 0);
         scene.add(ship1);
         shipsRef.current.push({ mesh: ship1, type: 'ship', id: 'ship1' });
 
         const ship2 = isUltraLow ? null : createShip(0x0044ff);
         if (ship2) {
-            ship2.position.set(-40, 10, 20);
+            ship2.position.set(-20, -100, -20);
             scene.add(ship2);
             shipsRef.current.push({ mesh: ship2, type: 'ship', id: 'ship2' });
         }
@@ -4840,19 +4955,31 @@ function SolarSystemScene({ onHubSelect, isPaused, mode, onError, quality }: { o
             event.object.userData.isDragging = false;
         });
 
+        const createPersonality = () => ({
+            reactionTime: 0.2 + Math.random() * 0.5,
+            aimJitter: 0.05 + Math.random() * 0.15,
+            aggression: 0.5 + Math.random() * 1.5,
+            preferredDist: 80 + Math.random() * 60
+        });
+
         var combatState = {
             ufos: [
-                { mesh: ufo1, velocity: new THREE.Vector3(0, 0, 30), lastFire: 0, health: 10, isDead: false, respawnTimer: 0, color: 0x00ffcc, type: 'ufo' },
-                ...(ufo2 ? [{ mesh: ufo2, velocity: new THREE.Vector3(0, 0, 30), lastFire: 0, health: 10, isDead: false, respawnTimer: 0, color: 0xff00cc, type: 'ufo' }] : [])
+                { mesh: ufo1, velocity: new THREE.Vector3(0, 0, 30), lastFire: 0, health: 15, maxHealth: 15, isDead: false, respawnTimer: 0, color: 0x00ffcc, type: 'ufo', faction: 'ufo', state: 'attacking', personality: createPersonality(), maneuverTimer: 0, isRolling: false },
+                ...(ufo2 ? [{ mesh: ufo2, velocity: new THREE.Vector3(0, 0, 30), lastFire: 0, health: 15, maxHealth: 15, isDead: false, respawnTimer: 0, color: 0xff00cc, type: 'ufo', faction: 'ufo', state: 'attacking', personality: createPersonality(), maneuverTimer: 0, isRolling: false }] : [])
             ],
             ships: [
-                { mesh: ship1, velocity: new THREE.Vector3(0, 0, -30), lastFire: 0, health: 10, isDead: false, respawnTimer: 0, color: 0xff4400, type: 'ship' },
-                ...(ship2 ? [{ mesh: ship2, velocity: new THREE.Vector3(0, 0, -30), lastFire: 0, health: 10, isDead: false, respawnTimer: 0, color: 0x0044ff, type: 'ship' }] : [])
+                { mesh: ship1, velocity: new THREE.Vector3(0, 0, -30), lastFire: 0, health: 15, maxHealth: 15, isDead: false, respawnTimer: 0, color: 0xff4400, type: 'ship', faction: 'ship', state: 'attacking', personality: createPersonality(), maneuverTimer: 0, isRolling: false },
+                ...(ship2 ? [{ mesh: ship2, velocity: new THREE.Vector3(0, 0, -30), lastFire: 0, health: 15, maxHealth: 15, isDead: false, respawnTimer: 0, color: 0x0044ff, type: 'ship', faction: 'ship', state: 'attacking', personality: createPersonality(), maneuverTimer: 0, isRolling: false }] : [])
             ],
             projectiles: [] as { mesh: THREE.Object3D, velocity: THREE.Vector3, life: number, type: string, shooter: any, color: number }[],
             lasers: [] as { line: THREE.Line, life: number }[],
-            particles: particleSystem // Replaced array with system
+            particles: particleSystem,
+            capturedPlanets: new Set<string>()
         };
+
+        // Initial Spawning Positions (Top/Bottom Orbit)
+        combatState.ufos.forEach((u, i) => u.mesh.position.set((i-0.5)*100, 100, (Math.random()-0.5)*100));
+        combatState.ships.forEach((s, i) => s.mesh.position.set((i-0.5)*100, -100, (Math.random()-0.5)*100));
         // --- END SHIPS & COMBAT ---
 
     } catch(err) {
@@ -4999,6 +5126,14 @@ function SolarSystemScene({ onHubSelect, isPaused, mode, onError, quality }: { o
                 h.mesh.position.y = 0; 
                 h.mesh.rotation.y += 0.005;
                 if(h.data.geometryType === 'torus' || h.data.geometryType === 'icosahedron') h.mesh.rotation.x += 0.005;
+
+                // Captured Planet Visuals
+                if (typeof combatState !== 'undefined' && combatState.capturedPlanets.has(h.data.id)) {
+                    h.mesh.scale.setScalar(1.1 + Math.sin(elapsedTime * 5) * 0.05);
+                    if (frame % 10 === 0) {
+                        combatState.particles.spawn(h.mesh.position, new THREE.Vector3(0, 5, 0), 0x00ffcc, 0.3, 0.4);
+                    }
+                }
             });
             if(core) core.rotation.y += 0.002; 
             if(starMesh) starMesh.rotation.y -= 0.0001; 
@@ -5119,14 +5254,20 @@ function SolarSystemScene({ onHubSelect, isPaused, mode, onError, quality }: { o
                 }
             };
 
-            const handleEntity = (entity: any, enemies: any[], speed: number, delta: number, avoidDist: number, isPiloted: boolean) => {
+            const handleEntity = (entity: any, enemies: any[], allies: any[], speed: number, delta: number, avoidDist: number, isPiloted: boolean) => {
                 if (entity.isDead) {
                     entity.respawnTimer -= delta;
                     if (entity.respawnTimer <= 0) {
                         entity.isDead = false;
-                        entity.health = 10;
+                        entity.health = entity.maxHealth;
                         entity.mesh.visible = true;
-                        entity.mesh.position.set((Math.random() - 0.5) * 80, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 80);
+                        entity.state = 'attacking';
+                        // Respawn at faction base (Top/Bottom Orbit)
+                        if (entity.faction === 'ufo') {
+                            entity.mesh.position.set((Math.random() - 0.5) * 100, 100, (Math.random() - 0.5) * 100);
+                        } else {
+                            entity.mesh.position.set((Math.random() - 0.5) * 100, -100, (Math.random() - 0.5) * 100);
+                        }
                         entity.velocity.set(0,0,0);
                     }
                     return;
@@ -5134,101 +5275,275 @@ function SolarSystemScene({ onHubSelect, isPaused, mode, onError, quality }: { o
 
                 if (entity.mesh.userData.isDragging) return;
 
-                // Spawn Engine Trail Particles
-                const trailSpawnRate = isUltraLow ? 0.7 : 0.3;
-                if (Math.random() > trailSpawnRate) { // Spawn rate
-                    // Position at the back of the entity
-                    const backOffset = new THREE.Vector3(0, 0, entity.type === 'ship' ? 4 : 1.5);
-                    backOffset.applyQuaternion(entity.mesh.quaternion);
+                // Engine Trails
+                const trailSpawnRate = isUltraLow ? 0.7 : 0.4;
+                if (Math.random() > trailSpawnRate) {
+                    const backOffset = new THREE.Vector3(0, 0, entity.type === 'ship' ? 4 : 1.5).applyQuaternion(entity.mesh.quaternion);
                     const pos = new THREE.Vector3().copy(entity.mesh.position).add(backOffset);
-                    
-                    // Add slight random spread
-                    pos.x += (Math.random() - 0.5) * 0.5;
-                    pos.y += (Math.random() - 0.5) * 0.5;
-                    pos.z += (Math.random() - 0.5) * 0.5;
-
-                    particles.spawn(pos, new THREE.Vector3(0,0,0), entity.color, 0.5, entity.type === 'ship' ? 0.6 : 0.8);
+                    particles.spawn(pos, new THREE.Vector3(0,0,0), entity.color, 0.4, 0.6);
                 }
 
-                // Find closest alive enemy
+                // AI Logic: Targeting
                 let target = null;
                 let minDist = Infinity;
-                for (const enemy of enemies) {
-                    if (!enemy.isDead) {
-                        const dist = entity.mesh.position.distanceTo(enemy.mesh.position);
-                        if (dist < minDist) {
-                            minDist = dist;
-                            target = enemy;
+
+                // Wingman Logic: Check if any ally needs help (being chased)
+                let helpTarget = null;
+                if (!isPiloted) {
+                    for (const ally of allies) {
+                        if (ally !== entity && !ally.isDead && ally.state === 'retreating') {
+                            let closestEnemyToAlly = null;
+                            let minAllyDist = Infinity;
+                            for (const enemy of enemies) {
+                                if (!enemy.isDead) {
+                                    const d = ally.mesh.position.distanceTo(enemy.mesh.position);
+                                    if (d < minAllyDist) {
+                                        minAllyDist = d;
+                                        closestEnemyToAlly = enemy;
+                                    }
+                                }
+                            }
+                            if (closestEnemyToAlly && minAllyDist < 60) {
+                                helpTarget = closestEnemyToAlly;
+                                break; 
+                            }
                         }
                     }
                 }
 
+                if (helpTarget) {
+                    target = helpTarget;
+                    minDist = entity.mesh.position.distanceTo(target.mesh.position);
+                    entity.state = 'chasing'; // Force chasing state to help ally
+                } else {
+                    for (const enemy of enemies) {
+                        if (!enemy.isDead) {
+                            const dist = entity.mesh.position.distanceTo(enemy.mesh.position);
+                            if (dist < minDist) {
+                                minDist = dist;
+                                target = enemy;
+                            }
+                        }
+                    }
+                }
+
+                // AI Logic: Dodge Incoming Fire
+                projectiles.forEach(p => {
+                    if (p.shooter.faction !== entity.faction) {
+                        const distToProj = entity.mesh.position.distanceTo(p.mesh.position);
+                        if (distToProj < 20) {
+                            const dodgeDir = new THREE.Vector3().subVectors(entity.mesh.position, p.mesh.position).normalize();
+                            entity.velocity.add(dodgeDir.multiplyScalar(speed * 2 * delta));
+                        }
+                    }
+                });
+
+                // AI Logic: Avoidance (Don't get too near enemies)
+                enemies.forEach(enemy => {
+                    if (!enemy.isDead) {
+                        const distToEnemy = entity.mesh.position.distanceTo(enemy.mesh.position);
+                        if (distToEnemy < avoidDist) {
+                            const avoidDir = new THREE.Vector3().subVectors(entity.mesh.position, enemy.mesh.position).normalize();
+                            entity.velocity.add(avoidDir.multiplyScalar(speed * 3 * delta));
+                        }
+                    }
+                });
+
+                // AI Logic: State Management
+                if (entity.health < entity.maxHealth * 0.3) {
+                    entity.state = 'retreating';
+                } else if (target && target.state === 'retreating' && minDist < 100) {
+                    entity.state = 'chasing';
+                } else if (entity.faction === 'ufo' && Math.random() < 0.01 && entity.state !== 'capturing') {
+                    entity.state = 'capturing';
+                } else if (!target) {
+                    entity.state = 'patrolling';
+                } else {
+                    entity.state = 'attacking';
+                }
+
+                // Planet Gravity Interaction
+                hubsRef.current.forEach(h => {
+                    const distToPlanet = entity.mesh.position.distanceTo(h.mesh.position);
+                    if (distToPlanet < 25) {
+                        const gravityPull = new THREE.Vector3().subVectors(h.mesh.position, entity.mesh.position).normalize().multiplyScalar(5 * delta);
+                        entity.velocity.add(gravityPull);
+                    }
+                });
+
                 if (isPiloted) {
-                    const accel = 100 * delta;
-                    const joy = moveState.current.joyVector;
-                    
-                    if (moveState.current.forward || joy.y < -0.1) entity.velocity.add(new THREE.Vector3(0,0,-accel).applyQuaternion(entity.mesh.quaternion));
-                    if (moveState.current.backward || joy.y > 0.1) entity.velocity.add(new THREE.Vector3(0,0,accel).applyQuaternion(entity.mesh.quaternion));
-                    
-                    entity.mesh.rotateY(moveState.current.rotY);
-                    entity.mesh.rotateX(moveState.current.rotX);
-                    
-                    // Banking effect
-                    entity.mesh.rotateZ(-moveState.current.rotY * 0.5);
-                    entity.mesh.rotation.z *= 0.95; // Auto level roll
-                    
-                    moveState.current.rotX *= 0.85; 
-                    moveState.current.rotY *= 0.85;
-                    
-                    entity.velocity.multiplyScalar(0.98); // Drag
-                    
-                    if ((moveState.current.up || joy.x !== 0) && elapsedTime - entity.lastFire > 0.2 && target) {
-                        fireWeapon(entity, target, 'laser');
-                        entity.lastFire = elapsedTime;
+                    if (target) {
+                        setCurrentTarget(target.type === 'ufo' ? 'UFO Unit' : 'Enemy Ship');
+                        targetRef.current = target;
+                        setTargetHealth(target.health / target.maxHealth);
+                    } else {
+                        setCurrentTarget(null);
+                        targetRef.current = null;
                     }
-                } else if (target) {
-                    let targetPos = target.mesh.position;
 
-                    // Dogfight prediction
-                    const distToTarget = entity.mesh.position.distanceTo(targetPos);
-                    const predictedTarget = targetPos.clone().add(target.velocity.clone().multiplyScalar(distToTarget / speed));
+                    if (!moveState.current.isAIControlled) {
+                        // Manual Control
+                        const accel = 120 * delta;
+                        const joy = moveState.current.joyVector;
+                        if (moveState.current.forward || joy.y < -0.1) entity.velocity.add(new THREE.Vector3(0,0,-accel).applyQuaternion(entity.mesh.quaternion));
+                        if (moveState.current.backward || joy.y > 0.1) entity.velocity.add(new THREE.Vector3(0,0,accel).applyQuaternion(entity.mesh.quaternion));
+                        entity.mesh.rotateY(moveState.current.rotY);
+                        entity.mesh.rotateX(moveState.current.rotX);
+                        
+                        // Banking (G-Force simulation)
+                        const targetBank = -moveState.current.rotY * 2.5;
+                        entity.mesh.rotation.z = THREE.MathUtils.lerp(entity.mesh.rotation.z, targetBank, 5 * delta);
+                        
+                        moveState.current.rotX *= 0.85; moveState.current.rotY *= 0.85;
+                        entity.velocity.multiplyScalar(0.99); // Reduced damping for more inertia
+                        
+                        if (moveState.current.fireRequested && elapsedTime - entity.lastFire > 0.2 && target) {
+                            fireWeapon(entity, target, 'laser');
+                            fireWeapon(entity, target, 'machinegun');
+                            fireWeapon(entity, target, 'rocket');
+                            entity.lastFire = elapsedTime;
+                            moveState.current.fireRequested = false;
+                        }
+                    } else if (target) {
+                        // AI Autopilot for Player
+                        const dist = entity.mesh.position.distanceTo(target.mesh.position);
+                        const predicted = target.mesh.position.clone().add(target.velocity.clone().multiplyScalar(dist / 300));
+                        const desired = new THREE.Vector3().subVectors(predicted, entity.mesh.position).normalize().multiplyScalar(speed);
+                        const steer = new THREE.Vector3().subVectors(desired, entity.velocity).clampLength(0, speed * 5 * delta);
+                        entity.velocity.add(steer);
+                        
+                        const lookMatrix = new THREE.Matrix4().lookAt(entity.mesh.position, entity.mesh.position.clone().add(entity.velocity), new THREE.Vector3(0,1,0));
+                        entity.mesh.quaternion.slerp(new THREE.Quaternion().setFromRotationMatrix(lookMatrix), 5 * delta);
 
-                    const desired = new THREE.Vector3().subVectors(predictedTarget, entity.mesh.position);
-                    const dist = desired.length();
-                    
-                    if (dist < avoidDist) {
-                        desired.negate().add(new THREE.Vector3((Math.random()-0.5)*20, (Math.random()-0.5)*20, (Math.random()-0.5)*20));
+                        if (moveState.current.fireRequested && elapsedTime - entity.lastFire > 0.2) {
+                            fireWeapon(entity, target, 'laser');
+                            fireWeapon(entity, target, 'machinegun');
+                            fireWeapon(entity, target, 'rocket');
+                            entity.lastFire = elapsedTime;
+                            moveState.current.fireRequested = false;
+                        }
                     }
+                } else {
+                    // Non-piloted AI
+                    let targetPos = target ? target.mesh.position.clone() : new THREE.Vector3(0,0,0);
                     
-                    desired.normalize().multiplyScalar(speed);
-                    const steer = new THREE.Vector3().subVectors(desired, entity.velocity).clampLength(0, speed * 5 * delta);
+                    if (entity.state === 'retreating') {
+                        // Planet Shielding: Run behind nearest planet relative to target
+                        let nearestPlanet = hubsRef.current[0];
+                        let pDist = Infinity;
+                        hubsRef.current.forEach(h => {
+                            const d = entity.mesh.position.distanceTo(h.mesh.position);
+                            if (d < pDist) { pDist = d; nearestPlanet = h; }
+                        });
+
+                        if (target) {
+                            const dirFromEnemyToPlanet = new THREE.Vector3().subVectors(nearestPlanet.mesh.position, target.mesh.position).normalize();
+                            targetPos.copy(nearestPlanet.mesh.position).add(dirFromEnemyToPlanet.multiplyScalar(nearestPlanet.data.radius + 15));
+                        } else {
+                            targetPos.copy(nearestPlanet.mesh.position);
+                        }
+                    } else if (entity.state === 'capturing' && entity.faction === 'ufo') {
+                        // Target nearest planet
+                        let nearestPlanet = hubsRef.current[0];
+                        let pDist = Infinity;
+                        hubsRef.current.forEach(h => {
+                            const d = entity.mesh.position.distanceTo(h.mesh.position);
+                            if (d < pDist) { pDist = d; nearestPlanet = h; }
+                        });
+                        targetPos.copy(nearestPlanet.mesh.position);
+                        
+                        // If close to planet, "shoot" at it
+                        if (pDist < 30) {
+                            if (elapsedTime - entity.lastFire > 2.0) {
+                                fireWeapon(entity, { mesh: nearestPlanet.mesh, isDead: false }, 'laser');
+                                entity.lastFire = elapsedTime;
+                            }
+                            // Capture progress
+                            if (!combatState.capturedPlanets.has(nearestPlanet.data.id)) {
+                                particles.spawn(nearestPlanet.mesh.position, new THREE.Vector3((Math.random()-0.5)*10, 10, (Math.random()-0.5)*10), 0x00ffcc, 0.5, 0.5);
+                                if (Math.random() < 0.01) combatState.capturedPlanets.add(nearestPlanet.data.id);
+                            }
+                        }
+                    } else if (entity.state === 'patrolling') {
+                        // Patrol near the orbital plane (Y=0)
+                        targetPos.set((Math.random()-0.5)*120, (Math.random()-0.5)*10, (Math.random()-0.5)*120);
+                    }
+
+                    const dist = entity.mesh.position.distanceTo(targetPos);
+                    const desired = new THREE.Vector3().subVectors(targetPos, entity.mesh.position).normalize().multiplyScalar(speed);
+                    
+                    // Maintain distance for long range combat - Use personality preference
+                    const prefDist = entity.personality?.preferredDist || 110;
+                    if (entity.state === 'attacking' && dist < prefDist) {
+                        desired.negate().multiplyScalar(0.8);
+                    }
+
+                    const steer = new THREE.Vector3().subVectors(desired, entity.velocity).clampLength(0, speed * 3 * delta);
                     entity.velocity.add(steer);
                     
                     if (entity.velocity.lengthSq() > 0.1) {
                         const lookMatrix = new THREE.Matrix4().lookAt(entity.mesh.position, entity.mesh.position.clone().add(entity.velocity), new THREE.Vector3(0,1,0));
                         const targetQuat = new THREE.Quaternion().setFromRotationMatrix(lookMatrix);
-                        entity.mesh.quaternion.slerp(targetQuat, 5 * delta);
+                        
+                        // AI Banking & Maneuvers
+                        const sideVel = new THREE.Vector3(1,0,0).applyQuaternion(entity.mesh.quaternion).dot(entity.velocity);
+                        let bankAngle = -sideVel * 0.05;
+                        
+                        // Barrel Roll Logic
+                        entity.maneuverTimer -= delta;
+                        if (entity.maneuverTimer <= 0) {
+                            if (Math.random() < 0.05) { // 5% chance to start a roll
+                                entity.isRolling = true;
+                                entity.maneuverTimer = 1.0; // 1 second roll
+                            } else {
+                                entity.isRolling = false;
+                                entity.maneuverTimer = 2.0 + Math.random() * 5.0; // Wait before next possible roll
+                            }
+                        }
+
+                        if (entity.isRolling) {
+                            const rollProgress = 1.0 - (entity.maneuverTimer / 1.0);
+                            bankAngle += rollProgress * Math.PI * 2;
+                        }
+
+                        const bankQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), bankAngle);
+                        targetQuat.multiply(bankQuat);
+                        
+                        entity.mesh.quaternion.slerp(targetQuat, 4 * delta);
                     }
 
-                    if (elapsedTime - entity.lastFire > 0.5 + Math.random() * 1.0) {
-                        const dirToTarget = new THREE.Vector3().subVectors(targetPos, entity.mesh.position).normalize();
+                    // Firing Logic - Increased range to 200, with Aim Jitter
+                    if (target && entity.state !== 'retreating' && dist < 200 && elapsedTime - entity.lastFire > 1.0 + Math.random()) {
                         const forward = new THREE.Vector3(0,0,-1).applyQuaternion(entity.mesh.quaternion);
-                        if (dirToTarget.dot(forward) > 0.5) { // Wider firing arc
-                            const weapons = ['laser', 'laser', 'rocket', 'machinegun'];
-                            fireWeapon(entity, target, weapons[Math.floor(Math.random() * weapons.length)]);
+                        const jitter = entity.personality?.aimJitter || 0.1;
+                        const jitterVec = new THREE.Vector3((Math.random()-0.5)*jitter, (Math.random()-0.5)*jitter, (Math.random()-0.5)*jitter);
+                        const toTarget = new THREE.Vector3().subVectors(target.mesh.position, entity.mesh.position).add(jitterVec).normalize();
+                        
+                        if (forward.dot(toTarget) > 0.7) {
+                            const weapons = ['laser', 'machinegun', 'rocket'];
+                            fireWeapon(entity, target, weapons[Math.floor(Math.random()*3)]);
                             entity.lastFire = elapsedTime;
                         }
                     }
                 }
-                
-                // Keep within solar system bounds (Middle)
-                const centerDist = entity.mesh.position.length();
-                if (centerDist > 60) { // Increased from 45
-                    const pull = new THREE.Vector3().copy(entity.mesh.position).normalize().multiplyScalar(-speed * 6 * delta);
+
+                // Boundary Check: Last planet orbit is at ~90, so we set boundary at 110
+                const distFromCenter = entity.mesh.position.length();
+                if (distFromCenter > 110) {
+                    const pull = new THREE.Vector3().copy(entity.mesh.position).normalize().multiplyScalar(-speed * 15 * delta);
                     entity.velocity.add(pull);
-                } else if (centerDist < 20) {
-                    const push = new THREE.Vector3().copy(entity.mesh.position).normalize().multiplyScalar(speed * 6 * delta);
-                    entity.velocity.add(push);
+                    
+                    // Hard stop at extreme boundary
+                    if (distFromCenter > 130) {
+                        entity.mesh.position.normalize().multiplyScalar(130);
+                        entity.velocity.multiplyScalar(0.5);
+                    }
+                }
+
+                // Orbital Plane Gravity: Pull entities toward Y=0 once they leave spawn
+                if (Math.abs(entity.mesh.position.y) > 5) {
+                    const pullY = -entity.mesh.position.y * speed * 0.5 * delta;
+                    entity.velocity.y += pullY * 0.1;
                 }
                 
                 entity.velocity.clampLength(0, speed * 1.5);
@@ -5240,7 +5555,7 @@ function SolarSystemScene({ onHubSelect, isPaused, mode, onError, quality }: { o
                     ufo.mesh.children[2].rotation.x += 2 * delta;
                     ufo.mesh.children[2].rotation.y += 3 * delta;
                 }
-                handleEntity(ufo, ships, 45, delta, 30, false);
+                handleEntity(ufo, ships, ufos, 45, delta, 80, false);
             });
 
             ships.forEach((ship, index) => {
@@ -5250,7 +5565,7 @@ function SolarSystemScene({ onHubSelect, isPaused, mode, onError, quality }: { o
                 }
 
                 const isPiloted = mode === 'pilot' && index === 0;
-                handleEntity(ship, ufos, 55, delta, 40, isPiloted);
+                handleEntity(ship, ufos, ships, 55, delta, 80, isPiloted);
 
                 if (isPiloted && !warpRef.current.active && !ship.isDead) {
                     const idealOffset = new THREE.Vector3(0, 4, 15);
@@ -5372,16 +5687,54 @@ function SolarSystemScene({ onHubSelect, isPaused, mode, onError, quality }: { o
 
   // --- VIEWER MODE LOGIC MOVED HERE ---
   
-  const shouldShowJoysticks = showJoysticks && (mode === 'pilot' || mode === 'cinematic');
+  const shouldShowJoysticks = showJoysticks && mode === 'pilot';
 
   return (
       <>
         <div ref={mountRef} style={{ width: "100%", height: "100%", cursor: mode === 'pilot' ? "none" : "crosshair" }} />
-        {mode === 'pilot' && !isLocked && !showJoysticks && (
-            <div className="pilot-instructions">
-                <h2>Pilot Mode Engaged</h2>
-                <p>WASD to Accelerate/Decelerate | Mouse to Steer | Space to Fire</p>
-                <button className="pilot-btn" onClick={() => { document.body.requestPointerLock(); }}>CLICK TO START</button>
+        {mode === 'pilot' && (
+            <div className="pilot-hud" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                {/* Crosshair */}
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '40px', height: '40px', border: '2px solid rgba(0, 242, 255, 0.3)', borderRadius: '50%' }}>
+                    <div style={{ position: 'absolute', top: '50%', left: '-10px', width: '10px', height: '2px', background: 'rgba(0, 242, 255, 0.5)' }}></div>
+                    <div style={{ position: 'absolute', top: '50%', right: '-10px', width: '10px', height: '2px', background: 'rgba(0, 242, 255, 0.5)' }}></div>
+                    <div style={{ position: 'absolute', top: '-10px', left: '50%', width: '2px', height: '10px', background: 'rgba(0, 242, 255, 0.5)', transform: 'translateX(-50%)' }}></div>
+                    <div style={{ position: 'absolute', bottom: '-10px', left: '50%', width: '2px', height: '10px', background: 'rgba(0, 242, 255, 0.5)', transform: 'translateX(-50%)' }}></div>
+                </div>
+
+                {/* Target Info */}
+                <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+                    <div style={{ color: currentTarget ? '#ff4444' : '#00f2ff', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 'bold', textShadow: '0 0 10px currentColor' }}>
+                        {currentTarget ? `TARGET LOCKED: ${currentTarget}` : 'SCANNING...'}
+                    </div>
+                    {currentTarget && (
+                        <div style={{ marginTop: '8px', width: '120px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', margin: '8px auto' }}>
+                            <div style={{ width: `${targetHealth * 100}%`, height: '100%', background: '#ff4444', boxShadow: '0 0 10px #ff4444', transition: 'width 0.3s ease' }}></div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Side Controls */}
+                <div style={{ position: 'absolute', bottom: '40px', left: '40px', pointerEvents: 'auto' }}>
+                    <button 
+                        onClick={() => { moveState.current.isAIControlled = !moveState.current.isAIControlled; }} 
+                        className="glass-panel glow-button"
+                        style={{ padding: '10px 16px', borderRadius: '10px', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer', background: moveState.current.isAIControlled ? 'rgba(0, 242, 255, 0.2)' : 'rgba(0,0,0,0.5)' }}
+                    >
+                        AI: {moveState.current.isAIControlled ? 'AUTO' : 'MANUAL'}
+                    </button>
+                </div>
+
+                <div style={{ position: 'absolute', bottom: '40px', right: '40px', pointerEvents: 'auto' }}>
+                    <button 
+                        onMouseDown={() => { moveState.current.fireRequested = true; }}
+                        onTouchStart={() => { moveState.current.fireRequested = true; }}
+                        className="glow-button"
+                        style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, #ff4444, #990000)', border: '4px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 0 30px rgba(255, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', textTransform: 'uppercase' }}
+                    >
+                        FIRE
+                    </button>
+                </div>
             </div>
         )}
         {shouldShowJoysticks && (
